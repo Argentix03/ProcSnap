@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Windows.h>
 #include <processsnapshot.h>
+#include <algorithm>
 #include "KUSER_SHARED_DATA.h"  // currently only has 1 version of the struct and no windows version check
 
 void DisplayThreadInformation(HPSS hSnapshot);
@@ -11,16 +12,56 @@ void DisplayAuxPages(HPSS hSnapshot);
 void DisplayKUserSharedData(HANDLE pHandle);
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <PID>" << std::endl;
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <PID> [+thread] [+handle] [+va] [+aux] [+kusd]" << std::endl;
         return 1;
     }
 
-    // Parse PID
-    int pid = atoi(argv[1]); // Convert argument to integer
+    int pid = atoi(argv[1]);
     if (pid <= 0) {
         std::cerr << "Invalid PID. Please enter a positive numeric PID." << std::endl;
         return 1;
+    }
+
+    // Parse options
+    bool threadOption = false;
+    bool handleOption = false;
+    bool vaOption = false;
+    bool auxOption = false;
+    bool kusdOption = false;
+    for (int i = 2; i < argc; ++i) {
+        std::string arg = argv[i];
+        std::transform(arg.begin(), arg.end(), arg.begin(), [](unsigned char c) { return std::tolower(c); });
+        
+        if (arg == "+all") {
+            threadOption = true;
+            handleOption = true;
+            vaOption = true;
+            auxOption = true;
+            kusdOption = true;
+
+            break;
+        }
+
+        if (arg == "+thread") {
+            threadOption = true;
+        }
+        else if (arg == "+handle") {
+            handleOption = true;
+        }
+        else if (arg == "+va") {
+            vaOption = true;
+        }
+        else if (arg == "+aux") {
+            auxOption = true;
+        }
+        else if (arg == "+kusd") {
+            kusdOption = true;
+        }
+        else {
+            std::cerr << "Unknown option: " << argv[i] << std::endl;
+            return 1;
+        }
     }
 
     std::cout << "Snapshotting PID: " << pid << std::endl;
@@ -54,25 +95,34 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Comment out here for faster snapshots
-    // or cli argument this
     std::cout << std::endl << "==Process Info==" << std::endl;
     DisplayProcessInfo(hSnapshot);
 
-    std::cout << std::endl << "==Threads Info==" << std::endl;
-    DisplayThreadInformation(hSnapshot);
+    if(threadOption) {
+        std::cout << std::endl << "==Threads Info==" << std::endl;
+        DisplayThreadInformation(hSnapshot);
+    }
 
-    std::cout << std::endl << "==Handles Info==" << std::endl;
-    DisplayHandleInformation(hSnapshot);
+    if (handleOption) {
+        std::cout << std::endl << "==Handles Info==" << std::endl;
+        DisplayHandleInformation(hSnapshot);
+    }
 
-    std::cout << std::endl << "==Virtual Memory Info==" << std::endl;
-    DisplayVASpace(hSnapshot); // VA bumps it from less than 1s to over 2s on my machine.
+    if (vaOption) { // VA bumps it from less than 1s to over 2s on my machine.
+        std::cout << std::endl << "==Virtual Memory Info==" << std::endl;
+        DisplayVASpace(hSnapshot); 
+    }
 
-    std::cout << std::endl << "==Auxiliary Pages==" << std::endl; // Never got it to work wtf even is this auxiliary pages?
-    DisplayAuxPages(hSnapshot); 
+    if (auxOption) { // Never got it to work wtf even is this auxiliary pages?
+        std::cout << std::endl << "==Auxiliary Pages==" << std::endl; 
+        DisplayAuxPages(hSnapshot);
+    }
 
-    std::cout << std::endl << "==KUSER_SHARED_DATA Info==" << std::endl;
-    DisplayKUserSharedData(processHandle);
+    if (kusdOption) {
+        std::cout << std::endl << "==KUSER_SHARED_DATA Info==" << std::endl;
+        DisplayKUserSharedData(processHandle);
+    }
+
 
     // "At this point in the code there shouldnt be a need to manually free" 
     // ...said every wise dev who never leaks anything.
