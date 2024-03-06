@@ -44,6 +44,7 @@ To actually do the analysis use a proper diffchecker with decent UI
 
 ![image](https://github.com/Argentix03/ProcSnap/assets/39255806/79bdcaae-c38b-4fa0-a1ed-4c4793fa9a6d)
 ![image](https://github.com/Argentix03/ProcSnap/assets/39255806/d0c1217b-8516-4f21-af0d-5b04aef7d705)
+![image](https://github.com/Argentix03/ProcSnap/assets/39255806/e2e8492d-f76d-4b05-856e-c31eb13fcb3b)
 
 
 
