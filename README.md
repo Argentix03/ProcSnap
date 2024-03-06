@@ -1,10 +1,10 @@
 # Process Snapshot Tool
 
 A command-line tool that takes a process snapshot and provides detailed data, including thread details, handle information, virtual address space, and KUSER shared data.  
-The tool is ment mostly to help capture data for use in diff anlysis in 2 states of time of the same process. It does not capture arbitrary memory content.
-
+The tool is ment mostly to help capture data for use in diff anlysis in 2 states of time of the same process. It does not capture arbitrary memory content.  
 The vast majority of data is done using snapshots from the following API:
 https://learn.microsoft.com/en-us/windows/win32/api/processsnapshot/  
+
 Although there are no write operations done, CoW is introduced on the cloned pages (AFIK), meaning some page faults for the original process.
 
 ## Features
@@ -27,6 +27,7 @@ To use the tool, run it from the command line with the target process's PID and 
 - `+va`: Include virtual address space information in the output.
 - `+aux`: Include auxiliary pages information in the output.
 - `+kusd`: Include `KUSER_SHARED_DATA` information in the output.
+- `+all`: Include all information in the output.
 
 ### Example
 
