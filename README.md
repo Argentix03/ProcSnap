@@ -5,7 +5,7 @@ The tool is ment mostly to help capture data for use in diff anlysis in 2 states
 
 The vast majority of data is done using snapshots from the following API:
 https://learn.microsoft.com/en-us/windows/win32/api/processsnapshot/  
-There are no write operations done on the cloned pages so no CoW introduced on the captured process (AFIK).
+Although there are no write operations done, CoW is introduced on the cloned pages (AFIK), meaning some page faults for the original process.
 
 ## Features
 
