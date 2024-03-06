@@ -1,7 +1,9 @@
 #pragma once
 
 #include <Windows.h>
+
 // Definition for KUSER_SHARED_DATA - Windows 11 23H2 x64 bit. Taken from VERGILIUS.
+// Possible to define the right struct based on current version or define multiple and use the right one dynamically.
 
 //0xc bytes (sizeof)
 struct _KSYSTEM_TIME

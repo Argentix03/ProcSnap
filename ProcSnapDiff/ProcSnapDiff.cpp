@@ -8,7 +8,7 @@ void DisplayProcessInfo(HPSS hSnapshot);
 void DisplayHandleInformation(HPSS hSnapshot);
 void DisplayVASpace(HPSS hSnapshot);
 void DisplayAuxPages(HPSS hSnapshot);
-void ReadRemoteMemoryDirectKUserSharedData(HANDLE pHandle);
+void DisplayKUserSharedData(HANDLE pHandle);
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     DisplayAuxPages(hSnapshot); 
 
     std::cout << std::endl << "==KUSER_SHARED_DATA Info==" << std::endl;
-    ReadRemoteMemoryDirectKUserSharedData(processHandle);
+    DisplayKUserSharedData(processHandle);
 
     // "At this point in the code there shouldnt be a need to manually free" 
     // ...said every wise dev who never leaks anything.
@@ -80,148 +80,6 @@ int main(int argc, char* argv[]) {
     CloseHandle(processHandle);
     
     return 0;
-}
-
-void ReadRemoteMemoryDirectKUserSharedData(HANDLE pHandle) {
-    const PVOID KUserSharedDataAddress = reinterpret_cast<PVOID>(0x7FFE0000); // 64 bit user mode 
-    KUSER_SHARED_DATA kusd = { 0 };
-
-    SIZE_T bytesRead = 0;
-    if (ReadProcessMemory(pHandle, KUserSharedDataAddress, &kusd, sizeof(kusd), &bytesRead)) {
-        // Formatting all of these would probably force me to learn about each field and teach me a lot
-        std::cout << "TickCountLowDeprecated: " << kusd.TickCountLowDeprecated << std::endl;
-        std::cout << "TickCountMultiplier: " << kusd.TickCountMultiplier << std::endl;
-        std::cout << "InterruptTime: " << kusd.InterruptTime.LowPart << ", " << kusd.InterruptTime.High1Time << std::endl;
-        std::cout << "SystemTime: " << kusd.SystemTime.LowPart << ", " << kusd.SystemTime.High1Time << std::endl;
-        std::cout << "TimeZoneBias: " << kusd.TimeZoneBias.LowPart << ", " << kusd.TimeZoneBias.High1Time << std::endl;
-        std::cout << "ImageNumberLow: " << kusd.ImageNumberLow << std::endl;
-        std::cout << "ImageNumberHigh: " << kusd.ImageNumberHigh << std::endl;
-        std::wcout << "NtSystemRoot: " << kusd.NtSystemRoot << std::endl;
-        std::cout << "MaxStackTraceDepth: " << kusd.MaxStackTraceDepth << std::endl;
-        std::cout << "CryptoExponent: " << kusd.CryptoExponent << std::endl;
-        std::cout << "TimeZoneId: " << kusd.TimeZoneId << std::endl;
-        std::cout << "LargePageMinimum: " << kusd.LargePageMinimum << std::endl;
-        std::cout << "AitSamplingValue: " << kusd.AitSamplingValue << std::endl;
-        std::cout << "AppCompatFlag: " << kusd.AppCompatFlag << std::endl;
-        std::cout << "RNGSeedVersion: " << kusd.RNGSeedVersion << std::endl;
-        std::cout << "GlobalValidationRunlevel: " << kusd.GlobalValidationRunlevel << std::endl;
-        std::cout << "TimeZoneBiasStamp: " << kusd.TimeZoneBiasStamp << std::endl;
-        std::cout << "NtBuildNumber: " << kusd.NtBuildNumber << std::endl;
-        std::cout << "NtProductType: " << kusd.NtProductType << std::endl;
-        std::cout << "ProductTypeIsValid: " << static_cast<unsigned>(kusd.ProductTypeIsValid) << std::endl;
-        std::cout << "Reserved0: " << static_cast<unsigned>(kusd.Reserved0[0]) << std::endl;
-        std::cout << "NativeProcessorArchitecture: " << kusd.NativeProcessorArchitecture << std::endl;
-        std::cout << "NtMajorVersion: " << kusd.NtMajorVersion << std::endl;
-        std::cout << "NtMinorVersion: " << kusd.NtMinorVersion << std::endl;
-        
-        // is this just cpuid?
-        std::cout << "ProcessorFeatures: ";
-        for (int i = 0; i < 64; ++i) {
-            std::cout << (kusd.ProcessorFeatures[i] ? "1" : "0");
-        }
-        std::cout << std::endl;
-
-        std::cout << "Reserved1: " << kusd.Reserved1 << std::endl;
-        std::cout << "Reserved3: " << kusd.Reserved3 << std::endl;
-        std::cout << "TimeSlip: " << kusd.TimeSlip << std::endl;
-        std::cout << "AlternativeArchitecture: " << kusd.AlternativeArchitecture << std::endl;
-        std::cout << "BootId: " << kusd.BootId << std::endl;
-        std::cout << "SystemExpirationDate: High: " << kusd.SystemExpirationDate.HighPart << ", Low: " << kusd.SystemExpirationDate.LowPart << std::endl;
-        std::cout << "SuiteMask: " << kusd.SuiteMask << std::endl;
-        std::cout << "KdDebuggerEnabled: " << static_cast<unsigned>(kusd.KdDebuggerEnabled) << std::endl;
-
-        // MitigationPolicies and bitfields
-        std::cout << "MitigationPolicies (full byte): " << static_cast<unsigned>(kusd.MitigationPolicies) << std::endl;
-        std::cout << "NXSupportPolicy (bits 0-1): " << static_cast<unsigned>(kusd.NXSupportPolicy) << std::endl;
-        std::cout << "SEHValidationPolicy (bits 2-3): " << static_cast<unsigned>(kusd.SEHValidationPolicy) << std::endl;
-        std::cout << "CurDirDevicesSkippedForDlls (bits 4-5): " << static_cast<unsigned>(kusd.CurDirDevicesSkippedForDlls) << std::endl;
-        std::cout << "Reserved (bits 6-7): " << static_cast<unsigned>((kusd.MitigationPolicies >> 6) & 0x03) << std::endl;
-
-        std::cout << "CyclesPerYield: " << kusd.CyclesPerYield << std::endl;
-        std::cout << "ActiveConsoleId: " << kusd.ActiveConsoleId << std::endl;
-        std::cout << "DismountCount: " << kusd.DismountCount << std::endl;
-        std::cout << "ComPlusPackage: " << kusd.ComPlusPackage << std::endl;
-        std::cout << "LastSystemRITEventTickCount: " << kusd.LastSystemRITEventTickCount << std::endl;
-        std::cout << "NumberOfPhysicalPages: " << kusd.NumberOfPhysicalPages << std::endl;
-        std::cout << "SafeBootMode: " << static_cast<unsigned>(kusd.SafeBootMode) << std::endl;
-        std::cout << "VirtualizationFlags: " << static_cast<unsigned>(kusd.VirtualizationFlags) << std::endl;
-        std::cout << "Reserved12: " << kusd.Reserved12 << std::endl;
-
-        // SharedDataFlags and bitfields
-        std::cout << "SharedDataFlags: " << kusd.SharedDataFlags << std::endl;
-        std::cout << "DbgErrorPortPresent: " << ((kusd.SharedDataFlags >> 0) & 1) << std::endl;
-        std::cout << "DbgElevationEnabled: " << ((kusd.SharedDataFlags >> 1) & 1) << std::endl;
-        std::cout << "DbgVirtEnabled: " << ((kusd.SharedDataFlags >> 2) & 1) << std::endl;
-        std::cout << "DbgInstallerDetectEnabled: " << ((kusd.SharedDataFlags >> 3) & 1) << std::endl;
-        std::cout << "DbgLkgEnabled: " << ((kusd.SharedDataFlags >> 4) & 1) << std::endl;
-        std::cout << "DbgDynProcessorEnabled: " << ((kusd.SharedDataFlags >> 5) & 1) << std::endl;
-        std::cout << "DbgConsoleBrokerEnabled: " << ((kusd.SharedDataFlags >> 6) & 1) << std::endl;
-        std::cout << "DbgSecureBootEnabled: " << ((kusd.SharedDataFlags >> 7) & 1) << std::endl;
-        std::cout << "DbgMultiSessionSku: " << ((kusd.SharedDataFlags >> 8) & 1) << std::endl;
-        std::cout << "DbgMultiUsersInSessionSku: " << ((kusd.SharedDataFlags >> 9) & 1) << std::endl;
-        std::cout << "DbgStateSeparationEnabled: " << ((kusd.SharedDataFlags >> 10) & 1) << std::endl;
-        std::cout << "SpareBits: " << ((kusd.SharedDataFlags >> 11) & 0x1FFFFF) << std::endl; // Use mask 0x1FFFFF to get 21 bits
-
-        std::cout << "TestRetInstruction: " << kusd.TestRetInstruction << std::endl;
-        std::cout << "QpcFrequency: " << kusd.QpcFrequency << std::endl;
-        std::cout << "SystemCall: " << kusd.SystemCall << std::endl;
-        std::cout << "Reserved2: " << kusd.Reserved2 << std::endl;
-        std::cout << "SystemCallPad: [" << kusd.SystemCallPad[0] << ", " << kusd.SystemCallPad[1] << "]" << std::endl;
-        std::cout << "TickCount (LowPart): " << kusd.TickCount.LowPart << std::endl;
-        std::cout << "TickCount (High1Time): " << kusd.TickCount.High1Time << std::endl;
-        std::cout << "TickCountQuad: " << kusd.TickCountQuad << std::endl;
-        std::cout << "TickCountPad: " << kusd.TickCountPad[0] << std::endl;
-        std::cout << "Cookie: " << kusd.Cookie << std::endl;
-        std::cout << "CookiePad: " << kusd.CookiePad[0] << std::endl;
-        std::cout << "ConsoleSessionForegroundProcessId: " << kusd.ConsoleSessionForegroundProcessId << std::endl;
-        std::cout << "TimeUpdateLock: " << kusd.TimeUpdateLock << std::endl;
-        std::cout << "BaselineSystemTimeQpc: " << kusd.BaselineSystemTimeQpc << std::endl;
-        std::cout << "BaselineInterruptTimeQpc: " << kusd.BaselineInterruptTimeQpc << std::endl;
-        std::cout << "QpcSystemTimeIncrement: " << kusd.QpcSystemTimeIncrement << std::endl;
-        std::cout << "QpcInterruptTimeIncrement: " << kusd.QpcInterruptTimeIncrement << std::endl;
-        std::cout << "QpcSystemTimeIncrementShift: " << static_cast<unsigned>(kusd.QpcSystemTimeIncrementShift) << std::endl;
-        std::cout << "QpcInterruptTimeIncrementShift: " << static_cast<unsigned>(kusd.QpcInterruptTimeIncrementShift) << std::endl;
-        std::cout << "UnparkedProcessorCount: " << kusd.UnparkedProcessorCount << std::endl;
-
-        // Displaying EnclaveFeatureMask as an array
-        std::cout << "EnclaveFeatureMask: [";
-        for (int i = 0; i < 4; ++i) {
-            if (i > 0) std::cout << ", ";
-            std::cout << kusd.EnclaveFeatureMask[i];
-        }
-        std::cout << "]" << std::endl;
-
-        std::cout << "TelemetryCoverageRound: " << kusd.TelemetryCoverageRound << std::endl;
-
-        // Displaying UserModeGlobalLogger as an array
-        std::cout << "UserModeGlobalLogger: [";
-        for (int i = 0; i < 16; ++i) {
-            if (i > 0) std::cout << ", ";
-            std::cout << kusd.UserModeGlobalLogger[i];
-        }
-        std::cout << "]" << std::endl;
-
-        std::cout << "ImageFileExecutionOptions: " << kusd.ImageFileExecutionOptions << std::endl;
-        std::cout << "LangGenerationCount: " << kusd.LangGenerationCount << std::endl;
-        std::cout << "Reserved4: " << kusd.Reserved4 << std::endl;
-        std::cout << "InterruptTimeBias: " << kusd.InterruptTimeBias << std::endl;
-        std::cout << "QpcBias: " << kusd.QpcBias << std::endl;
-        std::cout << "ActiveProcessorCount: " << kusd.ActiveProcessorCount << std::endl;
-        std::cout << "ActiveGroupCount: " << static_cast<unsigned>(kusd.ActiveGroupCount) << std::endl;
-        std::cout << "Reserved9: " << static_cast<unsigned>(kusd.Reserved9) << std::endl;
-        std::cout << "QpcData: " << kusd.QpcData << std::endl;
-        std::cout << "QpcBypassEnabled: " << static_cast<unsigned>(kusd.QpcBypassEnabled) << std::endl;
-        std::cout << "QpcShift: " << static_cast<unsigned>(kusd.QpcShift) << std::endl;
-        std::cout << "TimeZoneBiasEffectiveStart: " << kusd.TimeZoneBiasEffectiveStart.QuadPart << std::endl;
-        std::cout << "TimeZoneBiasEffectiveEnd: " << kusd.TimeZoneBiasEffectiveEnd.QuadPart << std::endl;
-        std::cout << "XState.EnabledFeatures: " << kusd.XState.EnabledFeatures << std::endl;
-        std::cout << "FeatureConfigurationChangeStamp: " << kusd.FeatureConfigurationChangeStamp.LowPart << ", " << kusd.FeatureConfigurationChangeStamp.High1Time << std::endl;
-        std::cout << "Spare: " << kusd.Spare << std::endl;
-        std::cout << "UserPointerAuthMask: " << kusd.UserPointerAuthMask << std::endl;
-    }
-    else {
-        std::cerr << "Failed to read memory. Error: " << GetLastError() << std::endl;
-    }
 }
 
 void DisplayAuxPages(HPSS hSnapshot) {
@@ -440,4 +298,146 @@ void DisplayProcessInfo(HPSS hSnapshot) {
     }
 
     return;
+}
+
+void DisplayKUserSharedData(HANDLE pHandle) {
+    const PVOID KUserSharedDataAddress = reinterpret_cast<PVOID>(0x7FFE0000); // 64 bit user mode 
+    KUSER_SHARED_DATA kusd = { 0 };
+
+    SIZE_T bytesRead = 0;
+    if (ReadProcessMemory(pHandle, KUserSharedDataAddress, &kusd, sizeof(kusd), &bytesRead)) {
+        // Formatting all of these would probably force me to learn about each field and teach me a lot
+        std::cout << "TickCountLowDeprecated: " << kusd.TickCountLowDeprecated << std::endl;
+        std::cout << "TickCountMultiplier: " << kusd.TickCountMultiplier << std::endl;
+        std::cout << "InterruptTime: " << kusd.InterruptTime.LowPart << ", " << kusd.InterruptTime.High1Time << std::endl;
+        std::cout << "SystemTime: " << kusd.SystemTime.LowPart << ", " << kusd.SystemTime.High1Time << std::endl;
+        std::cout << "TimeZoneBias: " << kusd.TimeZoneBias.LowPart << ", " << kusd.TimeZoneBias.High1Time << std::endl;
+        std::cout << "ImageNumberLow: " << kusd.ImageNumberLow << std::endl;
+        std::cout << "ImageNumberHigh: " << kusd.ImageNumberHigh << std::endl;
+        std::wcout << "NtSystemRoot: " << kusd.NtSystemRoot << std::endl;
+        std::cout << "MaxStackTraceDepth: " << kusd.MaxStackTraceDepth << std::endl;
+        std::cout << "CryptoExponent: " << kusd.CryptoExponent << std::endl;
+        std::cout << "TimeZoneId: " << kusd.TimeZoneId << std::endl;
+        std::cout << "LargePageMinimum: " << kusd.LargePageMinimum << std::endl;
+        std::cout << "AitSamplingValue: " << kusd.AitSamplingValue << std::endl;
+        std::cout << "AppCompatFlag: " << kusd.AppCompatFlag << std::endl;
+        std::cout << "RNGSeedVersion: " << kusd.RNGSeedVersion << std::endl;
+        std::cout << "GlobalValidationRunlevel: " << kusd.GlobalValidationRunlevel << std::endl;
+        std::cout << "TimeZoneBiasStamp: " << kusd.TimeZoneBiasStamp << std::endl;
+        std::cout << "NtBuildNumber: " << kusd.NtBuildNumber << std::endl;
+        std::cout << "NtProductType: " << kusd.NtProductType << std::endl;
+        std::cout << "ProductTypeIsValid: " << static_cast<unsigned>(kusd.ProductTypeIsValid) << std::endl;
+        std::cout << "Reserved0: " << static_cast<unsigned>(kusd.Reserved0[0]) << std::endl;
+        std::cout << "NativeProcessorArchitecture: " << kusd.NativeProcessorArchitecture << std::endl;
+        std::cout << "NtMajorVersion: " << kusd.NtMajorVersion << std::endl;
+        std::cout << "NtMinorVersion: " << kusd.NtMinorVersion << std::endl;
+
+        // is this just cpuid?
+        std::cout << "ProcessorFeatures: ";
+        for (int i = 0; i < 64; ++i) {
+            std::cout << (kusd.ProcessorFeatures[i] ? "1" : "0");
+        }
+        std::cout << std::endl;
+
+        std::cout << "Reserved1: " << kusd.Reserved1 << std::endl;
+        std::cout << "Reserved3: " << kusd.Reserved3 << std::endl;
+        std::cout << "TimeSlip: " << kusd.TimeSlip << std::endl;
+        std::cout << "AlternativeArchitecture: " << kusd.AlternativeArchitecture << std::endl;
+        std::cout << "BootId: " << kusd.BootId << std::endl;
+        std::cout << "SystemExpirationDate: High: " << kusd.SystemExpirationDate.HighPart << ", Low: " << kusd.SystemExpirationDate.LowPart << std::endl;
+        std::cout << "SuiteMask: " << kusd.SuiteMask << std::endl;
+        std::cout << "KdDebuggerEnabled: " << static_cast<unsigned>(kusd.KdDebuggerEnabled) << std::endl;
+
+        // MitigationPolicies and bitfields
+        std::cout << "MitigationPolicies (full byte): " << static_cast<unsigned>(kusd.MitigationPolicies) << std::endl;
+        std::cout << "NXSupportPolicy (bits 0-1): " << static_cast<unsigned>(kusd.NXSupportPolicy) << std::endl;
+        std::cout << "SEHValidationPolicy (bits 2-3): " << static_cast<unsigned>(kusd.SEHValidationPolicy) << std::endl;
+        std::cout << "CurDirDevicesSkippedForDlls (bits 4-5): " << static_cast<unsigned>(kusd.CurDirDevicesSkippedForDlls) << std::endl;
+        std::cout << "Reserved (bits 6-7): " << static_cast<unsigned>((kusd.MitigationPolicies >> 6) & 0x03) << std::endl;
+
+        std::cout << "CyclesPerYield: " << kusd.CyclesPerYield << std::endl;
+        std::cout << "ActiveConsoleId: " << kusd.ActiveConsoleId << std::endl;
+        std::cout << "DismountCount: " << kusd.DismountCount << std::endl;
+        std::cout << "ComPlusPackage: " << kusd.ComPlusPackage << std::endl;
+        std::cout << "LastSystemRITEventTickCount: " << kusd.LastSystemRITEventTickCount << std::endl;
+        std::cout << "NumberOfPhysicalPages: " << kusd.NumberOfPhysicalPages << std::endl;
+        std::cout << "SafeBootMode: " << static_cast<unsigned>(kusd.SafeBootMode) << std::endl;
+        std::cout << "VirtualizationFlags: " << static_cast<unsigned>(kusd.VirtualizationFlags) << std::endl;
+        std::cout << "Reserved12: " << kusd.Reserved12 << std::endl;
+
+        // SharedDataFlags and bitfields
+        std::cout << "SharedDataFlags: " << kusd.SharedDataFlags << std::endl;
+        std::cout << "DbgErrorPortPresent: " << ((kusd.SharedDataFlags >> 0) & 1) << std::endl;
+        std::cout << "DbgElevationEnabled: " << ((kusd.SharedDataFlags >> 1) & 1) << std::endl;
+        std::cout << "DbgVirtEnabled: " << ((kusd.SharedDataFlags >> 2) & 1) << std::endl;
+        std::cout << "DbgInstallerDetectEnabled: " << ((kusd.SharedDataFlags >> 3) & 1) << std::endl;
+        std::cout << "DbgLkgEnabled: " << ((kusd.SharedDataFlags >> 4) & 1) << std::endl;
+        std::cout << "DbgDynProcessorEnabled: " << ((kusd.SharedDataFlags >> 5) & 1) << std::endl;
+        std::cout << "DbgConsoleBrokerEnabled: " << ((kusd.SharedDataFlags >> 6) & 1) << std::endl;
+        std::cout << "DbgSecureBootEnabled: " << ((kusd.SharedDataFlags >> 7) & 1) << std::endl;
+        std::cout << "DbgMultiSessionSku: " << ((kusd.SharedDataFlags >> 8) & 1) << std::endl;
+        std::cout << "DbgMultiUsersInSessionSku: " << ((kusd.SharedDataFlags >> 9) & 1) << std::endl;
+        std::cout << "DbgStateSeparationEnabled: " << ((kusd.SharedDataFlags >> 10) & 1) << std::endl;
+        std::cout << "SpareBits: " << ((kusd.SharedDataFlags >> 11) & 0x1FFFFF) << std::endl; // Use mask 0x1FFFFF to get 21 bits
+
+        std::cout << "TestRetInstruction: " << kusd.TestRetInstruction << std::endl;
+        std::cout << "QpcFrequency: " << kusd.QpcFrequency << std::endl;
+        std::cout << "SystemCall: " << kusd.SystemCall << std::endl;
+        std::cout << "Reserved2: " << kusd.Reserved2 << std::endl;
+        std::cout << "SystemCallPad: [" << kusd.SystemCallPad[0] << ", " << kusd.SystemCallPad[1] << "]" << std::endl;
+        std::cout << "TickCount (LowPart): " << kusd.TickCount.LowPart << std::endl;
+        std::cout << "TickCount (High1Time): " << kusd.TickCount.High1Time << std::endl;
+        std::cout << "TickCountQuad: " << kusd.TickCountQuad << std::endl;
+        std::cout << "TickCountPad: " << kusd.TickCountPad[0] << std::endl;
+        std::cout << "Cookie: " << kusd.Cookie << std::endl;
+        std::cout << "CookiePad: " << kusd.CookiePad[0] << std::endl;
+        std::cout << "ConsoleSessionForegroundProcessId: " << kusd.ConsoleSessionForegroundProcessId << std::endl;
+        std::cout << "TimeUpdateLock: " << kusd.TimeUpdateLock << std::endl;
+        std::cout << "BaselineSystemTimeQpc: " << kusd.BaselineSystemTimeQpc << std::endl;
+        std::cout << "BaselineInterruptTimeQpc: " << kusd.BaselineInterruptTimeQpc << std::endl;
+        std::cout << "QpcSystemTimeIncrement: " << kusd.QpcSystemTimeIncrement << std::endl;
+        std::cout << "QpcInterruptTimeIncrement: " << kusd.QpcInterruptTimeIncrement << std::endl;
+        std::cout << "QpcSystemTimeIncrementShift: " << static_cast<unsigned>(kusd.QpcSystemTimeIncrementShift) << std::endl;
+        std::cout << "QpcInterruptTimeIncrementShift: " << static_cast<unsigned>(kusd.QpcInterruptTimeIncrementShift) << std::endl;
+        std::cout << "UnparkedProcessorCount: " << kusd.UnparkedProcessorCount << std::endl;
+
+        // Displaying EnclaveFeatureMask as an array
+        std::cout << "EnclaveFeatureMask: [";
+        for (int i = 0; i < 4; ++i) {
+            if (i > 0) std::cout << ", ";
+            std::cout << kusd.EnclaveFeatureMask[i];
+        }
+        std::cout << "]" << std::endl;
+
+        std::cout << "TelemetryCoverageRound: " << kusd.TelemetryCoverageRound << std::endl;
+
+        // Displaying UserModeGlobalLogger as an array
+        std::cout << "UserModeGlobalLogger: [";
+        for (int i = 0; i < 16; ++i) {
+            if (i > 0) std::cout << ", ";
+            std::cout << kusd.UserModeGlobalLogger[i];
+        }
+        std::cout << "]" << std::endl;
+
+        std::cout << "ImageFileExecutionOptions: " << kusd.ImageFileExecutionOptions << std::endl;
+        std::cout << "LangGenerationCount: " << kusd.LangGenerationCount << std::endl;
+        std::cout << "Reserved4: " << kusd.Reserved4 << std::endl;
+        std::cout << "InterruptTimeBias: " << kusd.InterruptTimeBias << std::endl;
+        std::cout << "QpcBias: " << kusd.QpcBias << std::endl;
+        std::cout << "ActiveProcessorCount: " << kusd.ActiveProcessorCount << std::endl;
+        std::cout << "ActiveGroupCount: " << static_cast<unsigned>(kusd.ActiveGroupCount) << std::endl;
+        std::cout << "Reserved9: " << static_cast<unsigned>(kusd.Reserved9) << std::endl;
+        std::cout << "QpcData: " << kusd.QpcData << std::endl;
+        std::cout << "QpcBypassEnabled: " << static_cast<unsigned>(kusd.QpcBypassEnabled) << std::endl;
+        std::cout << "QpcShift: " << static_cast<unsigned>(kusd.QpcShift) << std::endl;
+        std::cout << "TimeZoneBiasEffectiveStart: " << kusd.TimeZoneBiasEffectiveStart.QuadPart << std::endl;
+        std::cout << "TimeZoneBiasEffectiveEnd: " << kusd.TimeZoneBiasEffectiveEnd.QuadPart << std::endl;
+        std::cout << "XState.EnabledFeatures: " << kusd.XState.EnabledFeatures << std::endl;
+        std::cout << "FeatureConfigurationChangeStamp: " << kusd.FeatureConfigurationChangeStamp.LowPart << ", " << kusd.FeatureConfigurationChangeStamp.High1Time << std::endl;
+        std::cout << "Spare: " << kusd.Spare << std::endl;
+        std::cout << "UserPointerAuthMask: " << kusd.UserPointerAuthMask << std::endl;
+    }
+    else {
+        std::cerr << "Failed to read memory. Error: " << GetLastError() << std::endl;
+    }
 }
